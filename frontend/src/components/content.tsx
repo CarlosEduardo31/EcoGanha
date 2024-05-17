@@ -7,7 +7,7 @@ export function Content() {
         <h1 className="font-[400]">Recicle e Economize </h1>
         <p className="font-[300] text-[1.7vh]">
           <br />
-          Descontos no <strong className="font-[600]">IPTU</strong> e Prêmios Para tornar Caruaru mais sustentável e
+          Descontos e Prêmios Para tornar Caruaru mais sustentável e
           reduzir o impacto ambiental do São João, estamos introduzindo o
           programa`&quot;`Recicle e Economize`&ldquo;`.
           <br />
