@@ -7,7 +7,7 @@ export function Cadastre() {
         Trasforme lixo em luxo com <br />
         nossos eco-descontos
       </h1>
-      <Link href={"../TelaPremios"} className="mt-[2vh] flex items-center justify-center">
+      <Link href={"https://forms.gle/5HM82LqcQ9cgCJA56"} className="mt-[2vh] flex items-center justify-center">
         <button className="bg-[#003f25] w-[23vh] font-semibold text-white rounded-lg h-[5vh]">Cadastre-se</button>
       </Link>
     </div>
