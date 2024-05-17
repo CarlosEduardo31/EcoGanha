@@ -3,6 +3,8 @@ import { Header } from "@/components/header";
 import { Cadastre } from "@/components/cadastre";
 import { Content } from "@/components/content";
 import { Carrossel } from "@/components/carrossel";
+import { Convite } from "@/components/convite";
+import { Footer } from "@/components/footer";
 
 export default function Home() {
   return (
@@ -12,6 +14,8 @@ export default function Home() {
       <Cadastre></Cadastre>
       <Content></Content>
       <Carrossel></Carrossel>
+      <Convite></Convite>
+      <Footer></Footer>
     </main>
   );
 }

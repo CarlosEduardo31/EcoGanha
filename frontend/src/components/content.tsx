@@ -5,7 +5,7 @@ export function Content() {
     <div className="flex text-[poppins] mt-[5vh] pl-[2vh]">
       <div className="">
         <h1 className="font-[400]">Recicle e Economize </h1>
-        <p className="font-[300] text-[1.3vh]">
+        <p className="font-[300] text-[1.7vh]">
           <br />
           Descontos no <strong className="font-[600]">IPTU</strong> e Prêmios Para tornar Caruaru mais sustentável e
           reduzir o impacto ambiental do São João, estamos introduzindo o
