@@ -1,3 +1,5 @@
+import Link from "next/link"
+
 export function Cadastre() {
   return (
     <div className="">
@@ -5,9 +7,9 @@ export function Cadastre() {
         Trasforme lixo em luxo com <br />
         nossos eco-descontos
       </h1>
-      <div className="mt-[2vh] flex items-center justify-center">
+      <Link href={"../TelaPremios"} className="mt-[2vh] flex items-center justify-center">
         <button className="bg-[#003f25] w-[23vh] font-semibold text-white rounded-lg h-[5vh]">Cadastre-se</button>
-      </div>
+      </Link>
     </div>
   );
 }

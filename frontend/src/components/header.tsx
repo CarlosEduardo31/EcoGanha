@@ -1,9 +1,10 @@
 import Image from "next/image";
+import Link from "next/link";
 
 export function Header() {
   return (
     <div className="w-full h-[10vh]">
-      <div className="bg-[#FBCA27] w-full h-[10vh] flex justify-around items-center shadow-sm fixed z-[14]">
+      <div className="bg-[#FBCA27] w-full h-[10vh] flex justify-around items-center shadow-lg fixed z-[14]">
         <button>
           <Image
             alt="Menu"
@@ -20,7 +21,7 @@ export function Header() {
           src={"/logoSVG.svg"}
           className="w-[8vh]"
         ></Image>
-        <button>
+        <Link href={"../TelaPremios"} className="hover">
           <Image
             alt="Menu"
             height={1000}
@@ -28,7 +29,7 @@ export function Header() {
             src={"/buttonSVG.svg"}
             className="w-[8vh] drop-shadow"
           ></Image>
-        </button>
+        </Link>
       </div>
     </div>
   );
