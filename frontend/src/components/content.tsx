@@ -9,7 +9,7 @@ export function Content() {
           <br />
           Descontos no <strong className="font-[600]">IPTU</strong> e Prêmios Para tornar Caruaru mais sustentável e
           reduzir o impacto ambiental do São João, estamos introduzindo o
-          programa "Recicle e Economize".
+          programa`&quot;`Recicle e Economize`&ldquo;`.
           <br />
           <br />
           Este programa oferece à população a oportunidade de ganhar descontos
