@@ -5,6 +5,7 @@ import { Content } from "@/components/content";
 import { Carrossel } from "@/components/carrossel";
 import { Convite } from "@/components/convite";
 import { Footer } from "@/components/footer";
+import "@fontsource/poppins";
 
 export default function Home() {
   return (
