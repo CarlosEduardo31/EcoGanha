@@ -1,12 +1,22 @@
 import React from 'react';
-import { Redemption } from '@/types/patrocinador';
-import { formatDate } from '@/utils/materialUtils';
 
 interface HistoryTabProps {
-  redemptions: Redemption[];
+  redemptions: any[];
 }
 
 const HistoryTab: React.FC<HistoryTabProps> = ({ redemptions }) => {
+  // Função para formatar data
+  const formatDate = (dateString: string): string => {
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(date);
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-md p-4 mb-6">
       <h2 className="text-[#003F25] font-semibold text-lg mb-4">Histórico de Resgates</h2>

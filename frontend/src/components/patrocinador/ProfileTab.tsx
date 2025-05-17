@@ -1,9 +1,8 @@
 import React from 'react';
 import Image from 'next/image';
-import { User } from '@/contexts/AuthContext';
 
 interface ProfileTabProps {
-  user: User;
+  user: any;
   onLogout: () => void;
 }
 

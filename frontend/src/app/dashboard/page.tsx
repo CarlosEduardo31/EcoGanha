@@ -38,6 +38,10 @@ export default function PatrocinadorDashboardPage() {
   const [success, setSuccess] = useState('');
   const [selectedOffer, setSelectedOffer] = useState<string>('');
   const [activeTab, setActiveTab] = useState('search');
+   // Handler para mudança de aba
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+  };
   const [recentUsers, setRecentUsers] = useState<UserData[]>([]);
   const [redemptions, setRedemptions] = useState<Redemption[]>([
     {

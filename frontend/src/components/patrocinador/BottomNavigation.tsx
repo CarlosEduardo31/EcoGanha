@@ -1,9 +1,8 @@
 import React from 'react';
-import { SponsorTabType } from '@/types/patrocinador';
 
 interface BottomNavigationProps {
-  activeTab: SponsorTabType;
-  onTabChange: (tab: SponsorTabType) => void;
+  activeTab: string;
+  onTabChange: (tab: string) => void;
 }
 
 const BottomNavigation: React.FC<BottomNavigationProps> = ({ activeTab, onTabChange }) => {

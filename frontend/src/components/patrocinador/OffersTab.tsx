@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
-import { Offer } from '@/types/patrocinador';
 
 interface OffersTabProps {
-  offers: Offer[];
-  onAddOffer: (offer: Offer) => void;
-  onUpdateOffer: (offer: Offer) => void;
+  offers: any[];
+  onAddOffer: (offer: any) => void;
+  onUpdateOffer: (offer: any) => void;
   onDeleteOffer: (offerId: string) => void;
 }
 
@@ -28,7 +27,7 @@ const OffersTab: React.FC<OffersTabProps> = ({
     setFormPoints('');
   };
 
-  const handleEditClick = (offer: Offer) => {
+  const handleEditClick = (offer: any) => {
     setIsAddingOffer(false);
     setEditingOfferId(offer.id);
     setFormTitle(offer.title);
@@ -43,7 +42,7 @@ const OffersTab: React.FC<OffersTabProps> = ({
       return; // Form validation
     }
     
-    const offerData: Offer = {
+    const offerData = {
       id: editingOfferId || `new-${Date.now()}`,
       title: formTitle,
       description: formDescription,

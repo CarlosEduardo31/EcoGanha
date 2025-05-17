@@ -1,14 +1,13 @@
 import React from 'react';
-import { UserData, Offer } from '@/types/patrocinador';
 
 interface SearchTabProps {
   searchPhone: string;
   setSearchPhone: (value: string) => void;
-  foundUser: UserData | null;
+  foundUser: any;
   loading: boolean;
   error: string;
   success: string;
-  offers: Offer[];
+  offers: any[];
   selectedOffer: string;
   setSelectedOffer: (value: string) => void;
   onSearch: () => void;
@@ -28,16 +27,10 @@ const SearchTab: React.FC<SearchTabProps> = ({
   onSearch,
   onRedeemPoints
 }) => {
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSearch();
-  };
-
   return (
     <div className="bg-white rounded-lg shadow-md p-4 mb-6">
       <h2 className="text-[#003F25] font-semibold text-lg mb-4">Buscar Cliente</h2>
       
-      <form onSubmit={handleSubmit}>
       <div className="flex mb-4">
         <input
           type="tel"
@@ -47,27 +40,13 @@ const SearchTab: React.FC<SearchTabProps> = ({
           className="flex-grow px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-[#003F25]"
         />
         <button
-          type="button"
           onClick={onSearch}
           disabled={loading}
-          className="bg-[#003F25] text-white px-4 py-2 rounded-r-md hover:bg-[#002918] transition duration-200 flex items-center"
+          className="bg-[#003F25] text-white px-4 py-2 rounded-r-md hover:bg-[#002918] transition duration-200"
         >
-          {loading ? (
-            <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-          ) : (
-            <>
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              Buscar
-            </>
-          )}
+          {loading ? 'Buscando...' : 'Buscar'}
         </button>
       </div>
-      </form>
 
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
@@ -138,22 +117,10 @@ const SearchTab: React.FC<SearchTabProps> = ({
 
           <button
             onClick={onRedeemPoints}
-            disabled={loading || !selectedOffer || (foundUser.points < (offers.find(o => o.id === selectedOffer)?.points || 0))}
-            className="w-full bg-[#003F25] text-white py-2 px-4 rounded-md hover:bg-[#002918] transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+            disabled={loading || !selectedOffer}
+            className="w-full bg-[#003F25] text-white py-2 px-4 rounded-md hover:bg-[#002918] transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? (
-              <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-            ) : (
-              <>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Confirmar Resgate
-              </>
-            )}
+            {loading ? 'Processando...' : 'Confirmar Resgate'}
           </button>
         </div>
       )}
