@@ -1,7 +1,10 @@
-"use client"
+// Atualização para o AuthContext para incluir funcionalidade de cadastro
 // contexts/AuthContext.tsx
+
+"use client"
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { mockUsers, mockRecycleHistory, mockRedemptionHistory } from '@/data/mockData';
+import { registerUser } from '@/services/authService';
 
 // Tipos de usuário
 export type UserType = 'comum' | 'ecoponto' | 'patrocinador';
@@ -14,9 +17,25 @@ export interface User {
   points: number;
 }
 
+// Interface para dados de cadastro
+export interface RegisterData {
+  nome: string;
+  telefone: string;
+  senha: string;
+  logradouro: string;
+  numero: string;
+  complemento: string;
+  bairro: string;
+  cidade: string;
+  estado: string;
+  cep: string;
+  referencia: string;
+}
+
 interface AuthContextType {
   user: User | null;
   login: (phone: string, password: string) => Promise<void>;
+  register: (data: RegisterData) => Promise<void>; // Nova função de registro
   logout: () => void;
   isAuthenticated: boolean;
   findUserByPhone: (phone: string) => Promise<User | null>;
@@ -45,51 +64,73 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Função de login
-  // async function login(phone: string, password: string) {
-  //   try {
-  //     // No mundo real, aqui ocorreria uma chamada à API
-  //     // Simulação de verificação
-  //     const foundUser = users.find(u => u.phone === phone);
+  async function login(phone: string, password: string) {
+    console.log('Função login chamada com telefone:', phone);
+    try {
+      // No mundo real, aqui ocorreria uma chamada à API
+      // Simulação de verificação
+      const foundUser = users.find(u => u.phone === phone);
+      console.log('Usuário encontrado:', foundUser);
       
-  //     // Para simplificar, qualquer senha é válida neste mock
-  //     if (foundUser) {
-  //       setUser(foundUser);
-  //       // Salvar no localStorage para persistir o login
-  //       localStorage.setItem('ecoGanhaUser', JSON.stringify(foundUser));
-  //     } else {
-  //       throw new Error('Usuário não encontrado');
-  //     }
-  //   } catch (error) {
-  //     console.error('Erro no login:', error);
-  //     throw error;
-  //   }
-  // }
-
-  // Função de login
-async function login(phone: string, password: string) {
-  console.log('Função login chamada com telefone:', phone);
-  try {
-    // No mundo real, aqui ocorreria uma chamada à API
-    // Simulação de verificação
-    const foundUser = users.find(u => u.phone === phone);
-    console.log('Usuário encontrado:', foundUser);
-    
-    // Para simplificar, qualquer senha é válida neste mock
-    if (foundUser) {
-      console.log('Usuário válido, atualizando estado');
-      setUser(foundUser);
-      // Salvar no localStorage para persistir o login
-      localStorage.setItem('ecoGanhaUser', JSON.stringify(foundUser));
-      console.log('Usuário salvo no localStorage');
-    } else {
-      console.log('Usuário não encontrado');
-      throw new Error('Usuário não encontrado');
+      // Para simplificar, qualquer senha é válida neste mock
+      if (foundUser) {
+        console.log('Usuário válido, atualizando estado');
+        setUser(foundUser);
+        // Salvar no localStorage para persistir o login
+        localStorage.setItem('ecoGanhaUser', JSON.stringify(foundUser));
+        console.log('Usuário salvo no localStorage');
+      } else {
+        console.log('Usuário não encontrado');
+        throw new Error('Usuário não encontrado');
+      }
+    } catch (error) {
+      console.error('Erro no login:', error);
+      throw error;
     }
-  } catch (error) {
-    console.error('Erro no login:', error);
-    throw error;
   }
-}
+
+  // Nova função de registro
+  async function register(data: RegisterData) {
+    try {
+      // Verificar se o telefone já está em uso
+      const existingUser = users.find(u => u.phone === data.telefone);
+      if (existingUser) {
+        throw new Error('Este número de telefone já está cadastrado');
+      }
+
+      // Formatar os dados para o formato esperado pela API
+      const formattedData = {
+        ...data,
+        // Outras transformações de dados, se necessário
+      };
+
+      // Chamar serviço de registro
+      const newUser = await registerUser(formattedData);
+
+      // Criar objeto de usuário no formato esperado pelo contexto
+      const userToAdd: User = {
+        id: newUser.id,
+        name: newUser.nome,
+        phone: newUser.telefone,
+        userType: 'comum' as UserType,
+        points: 0
+      };
+
+      // Adicionar à lista de usuários
+      setUsers(prevUsers => [...prevUsers, userToAdd]);
+      
+      console.log('Usuário cadastrado com sucesso:', userToAdd);
+      
+      // Opcionalmente, fazer login automático
+      // setUser(userToAdd);
+      // localStorage.setItem('ecoGanhaUser', JSON.stringify(userToAdd));
+      
+      return;
+    } catch (error) {
+      console.error('Erro no cadastro:', error);
+      throw error;
+    }
+  }
 
   // Função de logout
   function logout() {
@@ -216,7 +257,8 @@ async function login(phone: string, password: string) {
   return (
     <AuthContext.Provider value={{ 
       user, 
-      login, 
+      login,
+      register, // Nova função adicionada
       logout, 
       isAuthenticated: !!user,
       findUserByPhone,

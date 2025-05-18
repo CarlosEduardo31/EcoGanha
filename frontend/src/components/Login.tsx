@@ -117,7 +117,7 @@ export function Login() {
         <div className="bg-gray-50 px-6 py-4 text-center">
           <p className="text-sm text-gray-600">
             Não tem uma conta?{' '}
-            <a href="#" className="text-[#003F25] font-medium hover:underline">
+            <a href="/cadastro" className="text-[#003F25] font-medium hover:underline">
               Cadastre-se
             </a>
           </p>
