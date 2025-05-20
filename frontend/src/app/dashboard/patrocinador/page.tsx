@@ -1,8 +1,12 @@
+// src/pages/dashboard/patrocinador.tsx
+
 "use client"
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { SponsorTabType, UserData, Offer, Redemption } from '@/types/patrocinador';
+import { offerService } from '@/services/offerService';
+import { redemptionService } from '@/services/redemptionService';
 
 // Componentes
 import SearchTab from '@/components/patrocinador/SearchTab';
@@ -20,65 +24,41 @@ export default function PatrocinadorDashboardPage() {
   const [success, setSuccess] = useState('');
   const [selectedOffer, setSelectedOffer] = useState<string>('');
   const [activeTab, setActiveTab] = useState<SponsorTabType>('search');
+  const [offers, setOffers] = useState<Offer[]>([]);
+  const [redemptions, setRedemptions] = useState<Redemption[]>([]);
   const router = useRouter();
 
-  // Ofertas do patrocinador
-  const [offers, setOffers] = useState<Offer[]>([
-    { 
-      id: '1', 
-      title: '20% de desconto em qualquer produto', 
-      description: 'Válido para compras acima de R$100',
-      points: 500 
-    },
-    { 
-      id: '2', 
-      title: 'Cupom de R$15', 
-      description: 'Válido para compras acima de R$30',
-      points: 300 
-    },
-    { 
-      id: '3', 
-      title: '10% de desconto em frutas e verduras', 
-      description: 'Válido uma vez por semana',
-      points: 400 
-    },
-  ]);
-
-  // Histórico de resgates
-  const [redemptions, setRedemptions] = useState<Redemption[]>([
-    {
-      id: '1',
-      userId: '1',
-      userName: 'Maria da Silva',
-      userPhone: '81999999999',
-      offerId: '1',
-      offerTitle: '20% de desconto em qualquer produto',
-      points: 500,
-      date: new Date().toISOString()
-    },
-    {
-      id: '2',
-      userId: '4',
-      userName: 'Vandilma Candido',
-      userPhone: '81666666666',
-      offerId: '2',
-      offerTitle: 'Cupom de R$15',
-      points: 300,
-      date: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString() // Ontem
-    }
-  ]);
-
   // Verificar autenticação
- useEffect(() => {
-  if (!isAuthenticated) {
-    router.push('/login');
-  } else if (user && user.userType !== 'patrocinador') {
-    // Redirecionar para o dashboard apropriado
-    router.push(`/dashboard/${user.userType}`);
-  }
-}, [isAuthenticated, user, router]);
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push('/login');
+    } else if (user?.userType !== 'patrocinador') {
+      router.push(`/dashboard/${user?.userType}`);
+    }
+  }, [isAuthenticated, user, router]);
 
-  // Buscar usuário pelo telefone - implementação simplificada
+  // Carregar dados iniciais
+  useEffect(() => {
+    const loadInitialData = async () => {
+      try {
+        // Carregar ofertas do parceiro
+        const offersData = await offerService.listPartnerOffers();
+        setOffers(offersData);
+
+        // Carregar histórico de resgates
+        const redemptionsData = await redemptionService.listPartnerRedemptions();
+        setRedemptions(redemptionsData);
+      } catch (error) {
+        console.error('Erro ao carregar dados iniciais:', error);
+      }
+    };
+
+    if (isAuthenticated && user?.userType === 'patrocinador') {
+      loadInitialData();
+    }
+  }, [isAuthenticated, user]);
+
+  // Buscar usuário pelo telefone
   const handleSearch = async () => {
     if (!searchPhone || searchPhone.length < 10) {
       setError('Digite um número de telefone válido');
@@ -91,28 +71,33 @@ export default function PatrocinadorDashboardPage() {
     setFoundUser(null);
     setSelectedOffer('');
 
-    // Simular uma busca com atraso (abordagem direta)
-    setTimeout(() => {
-      // Dados mockados para simulação
-      const mockUsers = [
-        { id: '1', name: 'Maria da Silva', phone: '81999999999', userType: 'comum', points: 150 },
-        { id: '4', name: 'Vandilma Candido', phone: '81666666666', userType: 'comum', points: 2000 },
-      ];
+    try {
+      const result = await findUserByPhone(searchPhone);
       
-      const found = mockUsers.find(u => u.phone === searchPhone);
-      
-      if (found && found.userType === 'comum') {
-        setFoundUser(found);
+      if (result && result.userType === 'comum') {
+        setFoundUser(result);
       } else {
         setError('Usuário não encontrado ou não é um usuário comum');
       }
-      
+    } catch (error) {
+      setError('Erro ao buscar usuário');
+      console.error('Erro na busca:', error);
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
-  // Resgatar pontos (remover pontos do usuário)
-  const handleRedeemPoints = () => {
+  // Selecionar um usuário recente
+  const handleSelectRecentUser = (selectedUser: UserData) => {
+    setFoundUser(selectedUser);
+    setSearchPhone(selectedUser.phone);
+    setError('');
+    setSuccess('');
+    setSelectedOffer('');
+  };
+
+  // Resgatar pontos
+  const handleRedeemPoints = async () => {
     if (!foundUser) {
       setError('Nenhum usuário selecionado');
       return;
@@ -138,50 +123,87 @@ export default function PatrocinadorDashboardPage() {
     setError('');
     setSuccess('');
 
-    // Simular operação com atraso
-    setTimeout(() => {
-      // Criar novo resgate no histórico
-      const newRedemption: Redemption = {
+    try {
+      // Chamar serviço para registrar o resgate
+      await redemptionService.create({
+        userId: foundUser.id,
+        offerId: selectedOffer
+      });
+      
+      // Buscar usuário atualizado para obter os pontos atualizados
+      const updatedUser = await findUserByPhone(foundUser.phone);
+      
+      // Criar novo resgate para atualizar a UI imediatamente
+      const newRedemption = {
         id: Date.now().toString(),
         userId: foundUser.id,
         userName: foundUser.name,
         userPhone: foundUser.phone,
-        offerId: offer.id,
+        offerId: selectedOffer,
         offerTitle: offer.title,
         points: offer.points,
         date: new Date().toISOString()
       };
       
-      // Atualizar a lista de resgates
       setRedemptions(prev => [newRedemption, ...prev]);
       
-      // Atualizar os pontos do usuário encontrado
-      setFoundUser(prev => {
-        if (!prev) return null;
-        return {
-          ...prev,
-          points: prev.points - offer.points
-        };
-      });
-      
       setSuccess(`Resgate bem-sucedido! ${offer.points} pontos foram descontados do usuário ${foundUser.name}.`);
+      
+      // Atualizar o usuário encontrado
+      if (updatedUser) {
+        setFoundUser(updatedUser);
+      } else {
+        // Se não conseguir buscar o usuário atualizado, atualiza manualmente
+        setFoundUser(prev => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            points: prev.points - offer.points
+          };
+        });
+      }
+      
+      // Limpar seleção
+      setSelectedOffer('');
+    } catch (error) {
+      setError('Erro ao processar resgate');
+      console.error('Erro ao processar resgate:', error);
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   // Gerenciar ofertas
-  const handleAddOffer = (offer: Offer) => {
-    setOffers(prev => [...prev, offer]);
+  const handleAddOffer = async (offer: Omit<Offer, 'id'>) => {
+    try {
+      const newOffer = await offerService.create(offer);
+      setOffers(prev => [...prev, newOffer]);
+    } catch (error) {
+      console.error('Erro ao adicionar oferta:', error);
+      throw error;
+    }
   };
 
-  const handleUpdateOffer = (updatedOffer: Offer) => {
-    setOffers(prev => prev.map(offer => 
-      offer.id === updatedOffer.id ? updatedOffer : offer
-    ));
+  const handleUpdateOffer = async (updatedOffer: Offer) => {
+    try {
+      await offerService.update(updatedOffer.id, updatedOffer);
+      setOffers(prev => prev.map(offer => 
+        offer.id === updatedOffer.id ? updatedOffer : offer
+      ));
+    } catch (error) {
+      console.error('Erro ao atualizar oferta:', error);
+      throw error;
+    }
   };
 
-  const handleDeleteOffer = (offerId: string) => {
-    setOffers(prev => prev.filter(offer => offer.id !== offerId));
+  const handleDeleteOffer = async (offerId: string) => {
+    try {
+      await offerService.remove(offerId);
+      setOffers(prev => prev.filter(offer => offer.id !== offerId));
+    } catch (error) {
+      console.error('Erro ao excluir oferta:', error);
+      throw error;
+    }
   };
 
   // Handler para mudança de aba
@@ -199,15 +221,6 @@ export default function PatrocinadorDashboardPage() {
 
   // Renderiza o conteúdo com base na aba ativa
   const renderContent = () => {
-    // Verifique se user está disponível
-    if (!user) {
-      return (
-        <div className="bg-white rounded-lg shadow-md p-4 mb-6">
-          <p className="text-center py-4 text-gray-500">Carregando informações do usuário...</p>
-        </div>
-      );
-    }
-
     switch (activeTab) {
       case 'search':
         return (
@@ -262,7 +275,7 @@ export default function PatrocinadorDashboardPage() {
       {/* Cabeçalho do patrocinador */}
       <div className="bg-[#FBCA27] rounded-lg p-4 shadow-md mb-6">
         <h1 className="text-[#003F25] text-xl font-bold text-center">Parceiro</h1>
-        <p className="text-center text-[#003F25]">Estabelecimento: {user?.name || 'Carregando...'}</p>
+        <p className="text-center text-[#003F25]">Estabelecimento: {user.name}</p>
       </div>
 
       {/* Conteúdo principal baseado na aba ativa */}

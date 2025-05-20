@@ -3,6 +3,7 @@ import { useState, FormEvent } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import authService from '@/services/authService';
 
 // Tipos para o formulário
 interface FormData {
@@ -217,7 +218,7 @@ export function Register() {
     }
   };
 
-  // Enviar o formulário
+   // Enviar o formulário
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     
@@ -236,12 +237,26 @@ export function Register() {
     setError('');
     
     try {
-      // Aqui você implementaria a chamada à API para cadastrar o usuário
-      // Exemplo simulado:
-      console.log('Dados de cadastro:', formData);
+      // Prepara os dados para enviar para a API
+      const userData = {
+        name: formData.nome,
+        phone: formData.telefone.replace(/\D/g, ''), // Remove caracteres não numéricos
+        password: formData.senha,
+        userType: 'comum', // Por padrão, registra como usuário comum
+        address: {
+          street: formData.logradouro,
+          number: formData.numero,
+          complement: formData.complemento,
+          neighborhood: formData.bairro,
+          city: formData.cidade,
+          state: formData.estado,
+          zipCode: formData.cep.replace(/\D/g, ''),
+          reference: formData.referencia
+        }
+      };
       
-      // Simular um atraso da API
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Chama o serviço de registro
+      await authService.register(userData);
       
       setSuccess('Cadastro realizado com sucesso!');
       
@@ -250,9 +265,15 @@ export function Register() {
         router.push('/login');
       }, 2000);
       
-    } catch (error) {
+    } catch (error: any) {
+      if (error.response) {
+        setError(error.response.data.message || 'Falha ao realizar cadastro. Tente novamente mais tarde.');
+      } else if (error.request) {
+        setError('Servidor indisponível. Tente novamente mais tarde.');
+      } else {
+        setError('Erro ao processar sua solicitação.');
+      }
       console.error('Erro no cadastro:', error);
-      setError('Falha ao realizar cadastro. Tente novamente mais tarde.');
     } finally {
       setLoading(false);
     }

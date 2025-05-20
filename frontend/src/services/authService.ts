@@ -1,101 +1,164 @@
-// Serviço para integração com API
-// services/authService.ts
+// src/services/authService.ts
 
-interface RegisterData {
-  nome: string;
-  telefone: string;
-  senha: string;
-  logradouro: string;
-  numero: string;
-  complemento: string;
-  bairro: string;
-  cidade: string;
-  estado: string;
-  cep: string;
-  referencia: string;
+import api from './api';
+
+/**
+ * Interface para os dados de login
+ */
+interface LoginCredentials {
+  phone: string;
+  password: string;
 }
 
+/**
+ * Interface para os dados de registro
+ */
+interface RegisterData {
+  name: string;
+  phone: string;
+  password: string;
+  userType: string;
+  address?: {
+    street: string;
+    number: string;
+    complement?: string;
+    neighborhood: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    reference?: string;
+  };
+}
+
+/**
+ * Interface para a resposta de usuário
+ */
 interface UserResponse {
   id: string;
-  nome: string;
-  telefone: string;
+  name: string;
+  phone: string;
   userType: string;
   points: number;
+  token?: string;
 }
 
-// Função para cadastrar novo usuário
-export const registerUser = async (userData: RegisterData): Promise<UserResponse> => {
-  try {
-    // Aqui você implementaria a chamada real à sua API
-    // const response = await fetch('sua-api/register', {
-    //   method: 'POST',
-    //   headers: {
-    //     'Content-Type': 'application/json',
-    //   },
-    //   body: JSON.stringify(userData),
-    // });
+/**
+ * Serviço responsável por operações relacionadas à autenticação
+ */
+const authService = {
+  /**
+   * Realiza o login do usuário
+   * @param credentials - Credenciais de login (telefone e senha)
+   * @returns Dados do usuário com token
+   */
+  login: async (credentials: LoginCredentials): Promise<UserResponse> => {
+    try {
+      // Limpa formatação do telefone (remove parênteses, espaços e traços)
+      const cleanPhone = credentials.phone.replace(/\D/g, '');
+      
+      const response = await api.post('/auth/login', {
+        ...credentials,
+        phone: cleanPhone
+      });
+      
+      // Salvar token no localStorage
+      if (response.data.data.token) {
+        localStorage.setItem('ecoGanhaToken', response.data.data.token);
+      }
+      
+      return response.data.data.user;
+    } catch (error) {
+      console.error('Erro no login:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Registra um novo usuário
+   * @param userData - Dados do novo usuário
+   * @returns Dados do usuário criado com token
+   */
+  register: async (userData: RegisterData): Promise<UserResponse> => {
+    try {
+      // Limpa formatação do telefone (remove parênteses, espaços e traços)
+      const cleanPhone = userData.phone.replace(/\D/g, '');
+      
+      const response = await api.post('/auth/register', {
+        ...userData,
+        phone: cleanPhone
+      });
+      
+      // Salvar token no localStorage
+      if (response.data.data.token) {
+        localStorage.setItem('ecoGanhaToken', response.data.data.token);
+      }
+      
+      return response.data.data.user;
+    } catch (error) {
+      console.error('Erro no registro:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Realiza o logout do usuário
+   */
+  logout: (): void => {
+    // Remove o token
+    localStorage.removeItem('ecoGanhaToken');
     
-    // if (!response.ok) {
-    //   throw new Error('Falha no cadastro');
-    // }
-    
-    // return await response.json();
-    
-    // Como é um mock, vamos simular o comportamento:
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Simular latência
-    
-    return {
-      id: Math.random().toString(36).substr(2, 9),
-      nome: userData.nome,
-      telefone: userData.telefone,
-      userType: 'comum',
-      points: 0
-    };
-  } catch (error) {
-    console.error('Erro ao cadastrar usuário:', error);
-    throw error;
+    // Limpa qualquer cache que o navegador possa ter para rotas protegidas
+    if (typeof window !== 'undefined') {
+      // Força a página a recarregar para limpar estados do React
+      window.location.href = '/login';
+    }
+  },
+
+  /**
+   * Verifica se existe um token salvo
+   * @returns Verdadeiro se existir um token
+   */
+  isAuthenticated: (): boolean => {
+    const token = localStorage.getItem('ecoGanhaToken');
+    return !!token;
+  },
+
+  /**
+   * Obtém o token de autenticação
+   * @returns Token JWT ou null
+   */
+  getToken: (): string | null => {
+    return localStorage.getItem('ecoGanhaToken');
+  },
+
+  /**
+   * Verifica se o perfil do usuário logado
+   * @returns Dados do usuário
+   */
+  getCurrentUser: async (): Promise<UserResponse | null> => {
+    try {
+      const response = await api.get('/users/profile');
+      return response.data.data;
+    } catch (error) {
+      console.error('Erro ao buscar usuário atual:', error);
+      return null;
+    }
+  },
+
+  /**
+   * Testa a conexão com a API
+   * @returns true se conexão ok, false caso contrário
+   */
+  testConnection: async (): Promise<boolean> => {
+    try {
+      // Tenta acessar a lista de materiais (endpoint público)
+      await api.get('/materials');
+      return true;
+    } catch (error) {
+      console.error('Erro ao testar conexão com API:', error);
+      return false;
+    }
   }
 };
 
-// Validar formato de telefone
-export const isValidPhone = (phone: string): boolean => {
-  // Remove caracteres não numéricos
-  const numericPhone = phone.replace(/\D/g, '');
-  // Verifica se tem pelo menos 10 dígitos (DDD + número)
-  return numericPhone.length >= 10 && numericPhone.length <= 11;
-};
-
-// Validar CEP
-export const isValidCEP = (cep: string): boolean => {
-  // Remove caracteres não numéricos
-  const numericCEP = cep.replace(/\D/g, '');
-  // CEP brasileiro tem 8 dígitos
-  return numericCEP.length === 8;
-};
-
-// Buscar endereço pelo CEP usando a API ViaCEP
-export const fetchAddressByCEP = async (cep: string) => {
-  if (!isValidCEP(cep)) {
-    throw new Error('CEP inválido');
-  }
-  
-  const numericCEP = cep.replace(/\D/g, '');
-  const response = await fetch(`https://viacep.com.br/ws/${numericCEP}/json/`);
-  
-  if (!response.ok) {
-    throw new Error('Erro ao buscar CEP');
-  }
-  
-  const data = await response.json();
-  
-  if (data.erro) {
-    throw new Error('CEP não encontrado');
-  }
-  
-  return {
-    logradouro: data.logradouro,
-    bairro: data.bairro,
-    cidade: data.localidade,
-    estado: data.uf
-  };
-};
+export default authService;

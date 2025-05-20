@@ -1,7 +1,13 @@
-import React, { useState } from 'react';
-import { UserData, Material } from '@/types/ecoponto';
-import { User } from '@/contexts/AuthContext';
+// src/components/ecoponto/SearchTab.tsx
 
+import React, { useState } from 'react';
+import { Material, UserData } from '@/types/ecoponto';
+import { useAuth } from '@/contexts/AuthContext';
+import { userService } from '@/services/userService';
+import { materialService } from '@/services/materialService';
+import { transactionService } from '@/services/transactionService';
+
+// Atualizar a interface SearchTabProps para incluir todas as propriedades
 interface SearchTabProps {
   materials: Material[];
   recentUsers: UserData[];
@@ -40,9 +46,9 @@ const SearchTab: React.FC<SearchTabProps> = ({
   calculatePoints
 }) => {
   
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSearchUser(searchPhone);
+    await onSearchUser(searchPhone);
   };
 
   return (
