@@ -49,7 +49,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Se existe token, buscar dados do perfil
           const currentUser = await authService.getCurrentUser();
           if (currentUser) {
-            setUser(currentUser);
+            setUser({
+              id: currentUser.id,
+              name: currentUser.name,
+              phone: currentUser.phone,
+              userType: currentUser.userType as UserType,
+              points: currentUser.points,
+            });
           } else {
             // Se não conseguiu buscar o usuário, limpar token
             authService.logout();
@@ -72,16 +78,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       // Usar o serviço de autenticação para login
       const loggedUser = await authService.login({ phone, password });
+
+      // Adaptar o tipo do usuário para o tipo esperado pelo contexto
+      const adaptedUser: User = {
+        id: loggedUser.id,
+        name: loggedUser.name,
+        phone: loggedUser.phone,
+        userType: loggedUser.userType as UserType,
+        points: loggedUser.points,
+      };
       
       // Salvar dados do usuário no estado
-      setUser(loggedUser);
+      setUser(adaptedUser);
       
       // Redirecionar para a dashboard adequada baseada no tipo de usuário
-      if (loggedUser.userType === 'comum') {
+      if (adaptedUser.userType === 'comum') {
         router.push('/dashboard/comum');
-      } else if (loggedUser.userType === 'ecoponto') {
+      } else if (adaptedUser.userType === 'ecoponto') {
         router.push('/dashboard/ecoponto');
-      } else if (loggedUser.userType === 'patrocinador') {
+      } else if (adaptedUser.userType === 'patrocinador') {
         router.push('/dashboard/patrocinador');
       } else {
         router.push('/dashboard');

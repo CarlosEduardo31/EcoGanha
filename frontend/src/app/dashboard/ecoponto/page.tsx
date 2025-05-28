@@ -8,6 +8,7 @@ import { materialService } from '@/services/materialService';
 import { transactionService } from '@/services/transactionService';
 import { ecoPointService } from '@/services/ecoPointService';
 import { operatorService } from '@/services/operatorService';
+import { userService } from '@/services/userService';
 
 // Componentes
 import SearchTab from '@/components/ecoponto/SearchTab';
@@ -72,57 +73,84 @@ export default function EcoPontoDashboardPage() {
 
   // Carregar dados iniciais (após ter o ecoPointId)
   useEffect(() => {
-    const loadInitialData = async () => {
-      if (!ecoPointId) return; // Espera até que o ecoPointId esteja disponível
+  const loadInitialData = async () => {
+    if (!ecoPointId) return; // Espera até que o ecoPointId esteja disponível
+    
+    setLoading(true);
+    try {
+      console.log(`Carregando dados para o EcoPonto ID: ${ecoPointId}`);
       
-      setLoading(true);
-      try {
-        console.log(`Carregando dados para o EcoPonto ID: ${ecoPointId}`);
-        
-        // Carregar materiais
-        const materialsData = await materialService.listAll();
-        setMaterials(materialsData);
-        console.log(`${materialsData.length} materiais carregados`);
+      // Carregar materiais
+      const materialsData = await materialService.listAll();
+      setMaterials(materialsData);
+      console.log(`${materialsData.length} materiais carregados`);
 
-        // Carregar transações recentes
-        const transactionsData = await transactionService.listByEcoPoint(ecoPointId);
-        setTransactions(transactionsData);
-        console.log(`${transactionsData.length} transações carregadas`);
+      // Carregar transações recentes
+      const transactionsData = await transactionService.listByEcoPoint(ecoPointId);
+      setTransactions(transactionsData);
+      console.log(`${transactionsData.length} transações carregadas`);
 
-        // Carregar estatísticas
-        const statsData = await ecoPointService.getStats(ecoPointId);
-        setStatsData(statsData);
-        
-        // Extrair usuários recentes das transações
-        const userIds = Array.from(new Set(transactionsData.map((t: any) => t.userId)));
-        const uniqueUsers: UserData[] = [];
-        
-        for (const userId of userIds) {
+      // Carregar estatísticas
+      const statsData = await ecoPointService.getStats(ecoPointId);
+      setStatsData(statsData);
+      
+      // Extrair usuários recentes das transações
+      const userIds = Array.from(new Set(transactionsData.map((t: any) => t.userId)));
+      const uniqueUsers: UserData[] = [];
+      
+      // Para cada ID de usuário, buscar os dados completos
+      for (const userId of userIds) {
+        try {
+          // Buscar dados completos do usuário para ter os pontos atuais
+          const userResponse = await userService.getById(String(userId));
+          uniqueUsers.push({
+            id: userResponse.id,
+            name: userResponse.name,
+            phone: userResponse.phone,
+            userType: userResponse.userType,
+            points: userResponse.points
+          });
+        } catch (userError) {
+          // Fallback: usar dados da transação
           const transaction = transactionsData.find((t: any) => t.userId === userId);
           if (transaction) {
-            uniqueUsers.push({
-              id: transaction.userId,
-              name: transaction.userName,
-              phone: transaction.userPhone,
-              userType: 'comum',
-              points: 0 // Valor padrão
-            });
+            // Buscar o usuário pelo telefone para ter pontos atualizados
+            try {
+              const user = await userService.findByPhone(transaction.userPhone);
+              uniqueUsers.push({
+                id: transaction.userId,
+                name: transaction.userName,
+                phone: transaction.userPhone,
+                userType: 'comum',
+                points: user?.points || 0
+              });
+            } catch (phoneError) {
+              // Último fallback: usar apenas os dados da transação
+              uniqueUsers.push({
+                id: transaction.userId,
+                name: transaction.userName,
+                phone: transaction.userPhone,
+                userType: 'comum',
+                points: 0 // Valor padrão, mas pelo menos temos os dados básicos
+              });
+            }
           }
         }
-        
-        setRecentUsers(uniqueUsers.slice(0, 5));
-        console.log(`${uniqueUsers.length} usuários recentes encontrados`);
-      } catch (error) {
-        console.error('Erro ao carregar dados iniciais:', error);
-      } finally {
-        setLoading(false);
       }
-    };
-
-    if (isAuthenticated && user?.userType === 'ecoponto' && ecoPointId) {
-      loadInitialData();
+      
+      setRecentUsers(uniqueUsers.slice(0, 5));
+      console.log(`${uniqueUsers.length} usuários recentes encontrados`);
+    } catch (error) {
+      console.error('Erro ao carregar dados iniciais:', error);
+    } finally {
+      setLoading(false);
     }
-  }, [isAuthenticated, user, ecoPointId]);
+  };
+
+  if (isAuthenticated && user?.userType === 'ecoponto' && ecoPointId) {
+    loadInitialData();
+  }
+}, [isAuthenticated, user, ecoPointId]);
 
   // Buscar usuário pelo telefone
   const handleSearch = async (phone: string) => {
